@@ -23,12 +23,12 @@ class ProjectFile(Base):
         nullable=False
     )
 
-    file_name: Mapped[str] = mapped_column(
+    filename: Mapped[str] = mapped_column(
         String(255),
         nullable=False
     )
 
-    file_path: Mapped[str] = mapped_column(
+    path: Mapped[str] = mapped_column(
         String(1000),
         nullable=False
     )
@@ -38,14 +38,24 @@ class ProjectFile(Base):
         nullable=False
     )
 
-    size: Mapped[int] = mapped_column(
-        Integer,
-        default=0
+    language: Mapped[str] = mapped_column(
+        String(100),
+        nullable=False
     )
 
     content: Mapped[str] = mapped_column(
         Text,
         nullable=False
+    )
+
+    tokens: Mapped[int] = mapped_column(
+        Integer,
+        default=0
+    )
+
+    size: Mapped[int] = mapped_column(
+        Integer,
+        default=0
     )
 
     created_at: Mapped[DateTime] = mapped_column(

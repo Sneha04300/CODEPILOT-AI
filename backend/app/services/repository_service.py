@@ -1,5 +1,4 @@
 import uuid
-from pathlib import Path
 
 from sqlalchemy.orm import Session
 
@@ -36,3 +35,22 @@ class RepositoryService:
         db.refresh(repository)
 
         return repository
+
+    @staticmethod
+    def get_all_repositories(db: Session):
+        return (
+            db.query(Repository)
+            .order_by(Repository.created_at.desc())
+            .all()
+        )
+
+    @staticmethod
+    def get_repository_by_id(
+        db: Session,
+        repository_id: uuid.UUID,
+    ):
+        return (
+            db.query(Repository)
+            .filter(Repository.id == repository_id)
+            .first()
+        )
