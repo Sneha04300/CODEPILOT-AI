@@ -13,6 +13,9 @@ class RepositoryCreate(BaseModel):
     language: str = "Unknown"
     source: str
 
+class GitHubCloneRequest(BaseModel):
+    github_url: str
+
 
 # -----------------------------
 # Returned from API
