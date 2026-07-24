@@ -88,3 +88,81 @@ class DashboardService:
         )
 
         return languages
+
+    @staticmethod
+    def get_recent_repositories(db, limit: int = 5):
+
+        repositories = (
+            db.query(Repository)
+            .order_by(Repository.created_at.desc())
+            .limit(limit)
+            .all()
+        )
+
+        return repositories
+
+    @staticmethod
+    def get_github_repositories(db):
+
+        repositories = (
+            db.query(Repository)
+            .filter(
+                Repository.source == "GitHub"
+            )
+            .order_by(
+                Repository.created_at.desc()
+            )
+            .all()
+        )
+
+        return repositories
+
+    @staticmethod
+    def get_dashboard_statistics(db):
+
+        total_repositories = (
+            db.query(func.count(Repository.id))
+            .scalar()
+            or 0
+        )
+
+        total_files = (
+            db.query(func.count(ProjectFile.id))
+            .scalar()
+            or 0
+        )
+
+        total_size = (
+            db.query(func.sum(ProjectFile.size))
+            .scalar()
+            or 0
+        )
+
+        total_languages = (
+            db.query(ProjectFile.language)
+            .distinct()
+            .count()
+        )
+
+        github_repositories = (
+            db.query(func.count(Repository.id))
+            .filter(Repository.source == "GitHub")
+            .scalar()
+            or 0
+        )
+
+        recent_repositories = (
+            db.query(func.count(Repository.id))
+            .filter(Repository.created_at.isnot(None))
+            .scalar()
+            or 0
+        )
+
+        return {
+            "total_repositories": total_repositories,
+            "total_files": total_files,
+            "total_size": total_size,
+            "total_languages": total_languages,
+            "github_repositories": github_repositories,
+            "recent_repositories": recent_repositories,
+        }

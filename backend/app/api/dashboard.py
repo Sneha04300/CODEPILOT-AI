@@ -118,3 +118,66 @@ def get_language_statistics(
             for language, count in languages
         ],
     }
+
+@router.get("/recent")
+def get_recent_repositories(
+    db: Session = Depends(get_db),
+):
+
+    repositories = DashboardService.get_recent_repositories(db)
+
+    return {
+        "success": True,
+        "count": len(repositories),
+        "repositories": [
+            {
+                "id": str(repo.id),
+                "name": repo.name,
+                "language": repo.language,
+                "source": repo.source,
+                "status": repo.status,
+                "total_files": repo.total_files,
+                "created_at": repo.created_at,
+                "last_updated": repo.last_updated,
+            }
+            for repo in repositories
+        ],
+    }
+
+@router.get("/github")
+def get_github_repositories(
+    db: Session = Depends(get_db),
+):
+
+    repositories = DashboardService.get_github_repositories(db)
+
+    return {
+        "success": True,
+        "count": len(repositories),
+        "repositories": [
+            {
+                "id": str(repo.id),
+                "name": repo.name,
+                "github_url": repo.github_url,
+                "owner": repo.owner,
+                "branch": repo.branch,
+                "stars": repo.stars,
+                "forks": repo.forks,
+                "commits": repo.commits,
+                "last_updated": repo.last_updated,
+            }
+            for repo in repositories
+        ],
+    }  
+
+@router.get("/statistics")
+def get_dashboard_statistics(
+    db: Session = Depends(get_db),
+):
+
+    statistics = DashboardService.get_dashboard_statistics(db)
+
+    return {
+        "success": True,
+        "statistics": statistics,
+    }   
