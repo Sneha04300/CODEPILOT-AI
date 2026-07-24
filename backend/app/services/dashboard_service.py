@@ -73,3 +73,18 @@ class DashboardService:
         )
 
         return repositories
+
+    @staticmethod
+    def get_language_statistics(db):
+
+        languages = (
+            db.query(
+                Repository.language,
+                func.count(Repository.id).label("count")
+            )
+            .group_by(Repository.language)
+            .order_by(func.count(Repository.id).desc())
+            .all()
+        )
+
+        return languages

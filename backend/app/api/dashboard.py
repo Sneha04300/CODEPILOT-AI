@@ -101,3 +101,20 @@ def search_repositories(
             for repo in repositories
         ],
     }
+@router.get("/languages")
+def get_language_statistics(
+    db: Session = Depends(get_db),
+):
+
+    languages = DashboardService.get_language_statistics(db)
+
+    return {
+        "success": True,
+        "languages": [
+            {
+                "language": language,
+                "count": count,
+            }
+            for language, count in languages
+        ],
+    }
