@@ -63,6 +63,36 @@ class Repository(Base):
         nullable=True
     )
 
+    stars: Mapped[int] = mapped_column(
+        Integer,
+        default=0
+    )
+
+    forks: Mapped[int] = mapped_column(
+        Integer,
+        default=0
+    )
+
+    commits: Mapped[int] = mapped_column(
+        Integer,
+        default=0
+    )
+
+    branch: Mapped[str] = mapped_column(
+        String(100),
+        default="main"
+    )
+
+    owner: Mapped[str | None] = mapped_column(
+        String(255),
+        nullable=True
+    )
+
+    last_updated: Mapped[DateTime] = mapped_column(
+        DateTime(timezone=True),
+        server_default=func.now()
+    )
+
     project_path: Mapped[str] = mapped_column(
         String(500),
         nullable=False
