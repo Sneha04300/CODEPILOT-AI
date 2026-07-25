@@ -134,3 +134,20 @@ class AIWorkspaceService:
             "included_files": included_files,
             "characters": current_size,
         }
+
+    @staticmethod
+    def get_repository_file(
+        db: Session,
+        repository_id,
+        file_id,
+    ):
+        file = (
+            db.query(ProjectFile)
+            .filter(
+                ProjectFile.id == file_id,
+                ProjectFile.repository_id == repository_id,
+            )
+            .first()
+        )
+
+        return file
