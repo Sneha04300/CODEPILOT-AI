@@ -1,0 +1,9 @@
+.env
+backend/.env
+
+venv/
+__pycache__/
+*.pyc
+
+backend/app/uploads/
+backend/app/indexed_projects/

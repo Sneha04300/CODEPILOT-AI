@@ -4,6 +4,7 @@ from sqlalchemy.orm import Session
 from app.db.database import get_db
 from app.schemas.ai_workspcae import AIQuestionRequest
 from app.services.ai_workspace_service import AIWorkspaceService
+from app.services.ai_service import AIService
 
 
 router = APIRouter(
@@ -44,38 +45,40 @@ def ask_repository_question(
     context_result = AIWorkspaceService.build_context(
         relevant_files
     )
+    ai_answer = AIService.ask_repository(
+    question=data.question,
+    context=context_result["context"],
+)
 
     # 4. Return test response
     return {
-        "success": True,
+    "success": True,
 
-        "repository": {
-            "id": str(repository.id),
-            "name": repository.name,
-        },
+    "repository": {
+        "id": str(repository.id),
+        "name": repository.name,
+    },
 
-        "question": data.question,
+    "question": data.question,
 
+    "answer": ai_answer,
+
+    "sources": [
+        {
+            "id": str(file.id),
+            "filename": file.filename,
+            "path": file.path,
+            "language": file.language,
+        }
+        for file in context_result["included_files"]
+    ],
+
+    "context_info": {
         "available_files": len(files),
-
-        "relevant_files": [
-            {
-                "id": str(file.id),
-                "filename": file.filename,
-                "path": file.path,
-                "language": file.language,
-                "tokens": file.tokens,
-            }
-            for file in relevant_files
-        ],
-
-        "context": {
-            "included_files": len(
-                context_result["included_files"]
-            ),
-            "characters": context_result["characters"],
-            "preview": context_result["context"][:1000],
-        },
-
-        "message": "AI context built successfully.",
-    }
+        "relevant_files": len(relevant_files),
+        "included_files": len(
+            context_result["included_files"]
+        ),
+        "characters": context_result["characters"],
+    },
+}
