@@ -89,4 +89,21 @@ class RepositoryExplorerService:
             "repository": repository,
             "tree": tree,
         }
+
+    @staticmethod
+    def get_file_content(
+        db: Session,
+        repository_id,
+        file_id,
+    ):
+        file = (
+            db.query(ProjectFile)
+            .filter(
+                ProjectFile.id == file_id,
+                ProjectFile.repository_id == repository_id,
+            )
+            .first()
+        )
+
+        return file
         

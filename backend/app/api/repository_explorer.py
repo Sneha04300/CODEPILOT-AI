@@ -82,3 +82,37 @@ def get_repository_tree(
         },
         "tree": result["tree"],
     }
+
+@router.get("/{repository_id}/files/{file_id}")
+def get_file_content(
+    repository_id: uuid.UUID,
+    file_id: uuid.UUID,
+    db: Session = Depends(get_db),
+):
+
+    file = RepositoryExplorerService.get_file_content(
+        db=db,
+        repository_id=repository_id,
+        file_id=file_id,
+    )
+
+    if file is None:
+        raise HTTPException(
+            status_code=404,
+            detail="File not found",
+        )
+
+    return {
+        "success": True,
+        "file": {
+            "id": str(file.id),
+            "repository_id": str(file.repository_id),
+            "filename": file.filename,
+            "path": file.path,
+            "extension": file.extension,
+            "language": file.language,
+            "tokens": file.tokens,
+            "size": file.size,
+            "content": file.content,
+        },
+    }
