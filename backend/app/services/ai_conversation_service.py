@@ -88,3 +88,38 @@ class AIConversationService:
         db.refresh(message)
 
         return message
+
+    @staticmethod
+    def delete_conversation(
+        db,
+        conversation_id,
+    ):
+        conversation = (
+            db.query(AIConversation)
+            .filter(
+                AIConversation.id == conversation_id
+            )
+            .first()
+        )
+
+        if conversation is None:
+            return False
+
+        try:
+            # Delete all messages first
+            db.query(AIMessage).filter(
+                AIMessage.conversation_id == conversation_id
+            ).delete(
+                synchronize_session=False
+            )
+
+            # Delete conversation
+            db.delete(conversation)
+
+            db.commit()
+
+            return True
+
+        except Exception:
+            db.rollback()
+            raise
