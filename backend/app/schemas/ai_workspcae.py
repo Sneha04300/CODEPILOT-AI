@@ -7,6 +7,8 @@ class AIQuestionRequest(BaseModel):
 
     repository_id: uuid.UUID
 
+    conversation_id: uuid.UUID
+
     question: str = Field(
         ...,
         min_length=1,
@@ -25,3 +27,7 @@ class CodeExplainRequest(BaseModel):
 class RepositoryFileExplainRequest(BaseModel):
     repository_id: uuid.UUID
     file_id: uuid.UUID
+
+class CreateConversationRequest(BaseModel):
+    repository_id: uuid.UUID
+    title: str = "New Conversation"
