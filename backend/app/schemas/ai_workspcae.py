@@ -31,3 +31,10 @@ class RepositoryFileExplainRequest(BaseModel):
 class CreateConversationRequest(BaseModel):
     repository_id: uuid.UUID
     title: str = "New Conversation"
+
+class UpdateConversationRequest(BaseModel):
+    title: str = Field(
+        ...,
+        min_length=1,
+        max_length=200,
+    )

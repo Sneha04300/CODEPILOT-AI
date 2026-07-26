@@ -4,6 +4,10 @@ from app.models.ai_message import AIMessage
 
 class AIConversationService:
 
+    # ---------------------------------------------------------
+    # 1. CREATE CONVERSATION
+    # ---------------------------------------------------------
+
     @staticmethod
     def create_conversation(
         db,
@@ -20,6 +24,11 @@ class AIConversationService:
         db.refresh(conversation)
 
         return conversation
+
+
+    # ---------------------------------------------------------
+    # 2. GET ALL CONVERSATIONS FOR A REPOSITORY
+    # ---------------------------------------------------------
 
     @staticmethod
     def get_conversations(
@@ -39,6 +48,11 @@ class AIConversationService:
 
         return conversations
 
+
+    # ---------------------------------------------------------
+    # 3. GET SINGLE CONVERSATION
+    # ---------------------------------------------------------
+
     @staticmethod
     def get_conversation(
         db,
@@ -51,6 +65,11 @@ class AIConversationService:
             )
             .first()
         )
+
+
+    # ---------------------------------------------------------
+    # 4. GET CONVERSATION MESSAGES
+    # ---------------------------------------------------------
 
     @staticmethod
     def get_messages(
@@ -69,6 +88,11 @@ class AIConversationService:
         )
 
         return messages
+
+
+    # ---------------------------------------------------------
+    # 5. ADD MESSAGE
+    # ---------------------------------------------------------
 
     @staticmethod
     def add_message(
@@ -89,6 +113,40 @@ class AIConversationService:
 
         return message
 
+
+    # ---------------------------------------------------------
+    # 6. UPDATE CONVERSATION TITLE
+    # ---------------------------------------------------------
+
+    @staticmethod
+    def update_conversation_title(
+        db,
+        conversation_id,
+        title,
+    ):
+        conversation = (
+            db.query(AIConversation)
+            .filter(
+                AIConversation.id == conversation_id
+            )
+            .first()
+        )
+
+        if conversation is None:
+            return None
+
+        conversation.title = title
+
+        db.commit()
+        db.refresh(conversation)
+
+        return conversation
+
+
+    # ---------------------------------------------------------
+    # 7. DELETE CONVERSATION
+    # ---------------------------------------------------------
+
     @staticmethod
     def delete_conversation(
         db,
@@ -106,7 +164,7 @@ class AIConversationService:
             return False
 
         try:
-            # Delete all messages first
+            # Delete messages belonging to this conversation
             db.query(AIMessage).filter(
                 AIMessage.conversation_id == conversation_id
             ).delete(

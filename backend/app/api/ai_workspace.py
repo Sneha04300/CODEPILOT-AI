@@ -10,6 +10,7 @@ from app.schemas.ai_workspcae import (
     CodeExplainRequest,
     RepositoryFileExplainRequest,
     CreateConversationRequest,
+    UpdateConversationRequest,
 )
 
 from app.services.ai_workspace_service import AIWorkspaceService
@@ -359,4 +360,43 @@ def delete_conversation(
     return {
         "success": True,
         "message": "Conversation deleted successfully",
+    }
+
+# ---------------------------------------------------------
+# 8. UPDATE CONVERSATION TITLE
+# ---------------------------------------------------------
+
+@router.patch("/conversations/{conversation_id}")
+def update_conversation_title(
+    conversation_id: uuid.UUID,
+    data: UpdateConversationRequest,
+    db: Session = Depends(get_db),
+):
+    conversation = (
+        AIConversationService.update_conversation_title(
+            db=db,
+            conversation_id=conversation_id,
+            title=data.title,
+        )
+    )
+
+    if conversation is None:
+        raise HTTPException(
+            status_code=404,
+            detail="Conversation not found",
+        )
+
+    return {
+        "success": True,
+        "message": "Conversation title updated successfully",
+
+        "conversation": {
+            "id": str(conversation.id),
+            "repository_id": str(
+                conversation.repository_id
+            ),
+            "title": conversation.title,
+            "created_at": conversation.created_at,
+            "updated_at": conversation.updated_at,
+        },
     }
