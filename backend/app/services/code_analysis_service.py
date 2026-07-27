@@ -200,3 +200,23 @@ class CodeAnalysisService:
             )
             .all()
         )
+
+        # ---------------------------------------------------------
+    # 10. GET REPOSITORY ANALYSES
+    # ---------------------------------------------------------
+
+    @staticmethod
+    def get_repository_analyses(
+        db: Session,
+        repository_id,
+    ):
+        return (
+            db.query(CodeAnalysis)
+            .filter(
+                CodeAnalysis.repository_id == repository_id
+            )
+            .order_by(
+                CodeAnalysis.created_at.desc()
+            )
+            .all()
+        )
