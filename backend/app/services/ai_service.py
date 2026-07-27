@@ -5,6 +5,9 @@ from app.core.config import GROQ_API_KEY
 
 class AIService:
 
+    # Maximum previous messages sent to Groq
+    MAX_HISTORY_MESSAGES = 12
+
     @staticmethod
     def ask_repository(
         question: str,
@@ -12,14 +15,37 @@ class AIService:
         history=None,
     ) -> str:
 
+        # -----------------------------------------------------
+        # 1. Validate API key
+        # -----------------------------------------------------
+
         if not GROQ_API_KEY:
             raise ValueError(
                 "GROQ_API_KEY is not configured."
             )
 
-        client = Groq(
-            api_key=GROQ_API_KEY
-        )
+        # -----------------------------------------------------
+        # 2. Validate question
+        # -----------------------------------------------------
+
+        if not question or not question.strip():
+            raise ValueError(
+                "Question cannot be empty."
+            )
+
+        # -----------------------------------------------------
+        # 3. Prepare Groq client
+        # -----------------------------------------------------
+
+        try:
+            client = Groq(
+                api_key=GROQ_API_KEY
+            )
+
+        except Exception as error:
+            raise RuntimeError(
+                "Failed to initialize AI service."
+            ) from error
 
         system_prompt = """
 You are CodePilot AI, an AI assistant that helps developers understand
@@ -45,10 +71,28 @@ Rules:
             }
         ]
 
-        # Add previous conversation history
+        # -----------------------------------------------------
+        # 4. Add limited conversation history
+        # -----------------------------------------------------
+
         if history:
-            for message in history:
-                if message.role not in ("user", "assistant"):
+
+            valid_history = [
+                message
+                for message in history
+                if message.role in (
+                    "user",
+                    "assistant",
+                )
+            ]
+
+            recent_history = valid_history[
+                -AIService.MAX_HISTORY_MESSAGES:
+            ]
+
+            for message in recent_history:
+
+                if not message.content:
                     continue
 
                 messages.append(
@@ -58,7 +102,16 @@ Rules:
                     }
                 )
 
-        # Add repository context + current question
+        # -----------------------------------------------------
+        # 5. Prepare repository context
+        # -----------------------------------------------------
+
+        if not context or not context.strip():
+            context = (
+                "No relevant repository context "
+                "was available for this question."
+            )
+
         current_prompt = f"""
 REPOSITORY CONTEXT:
 
@@ -76,15 +129,46 @@ CURRENT USER QUESTION:
             }
         )
 
-        completion = client.chat.completions.create(
-            model="llama-3.3-70b-versatile",
-            messages=messages,
-            temperature=0.2,
+        # -----------------------------------------------------
+        # 6. Call Groq
+        # -----------------------------------------------------
+
+        try:
+
+            completion = client.chat.completions.create(
+                model="llama-3.3-70b-versatile",
+                messages=messages,
+                temperature=0.2,
+            )
+
+        except Exception as error:
+
+            raise RuntimeError(
+                "AI service is currently unavailable."
+            ) from error
+
+        # -----------------------------------------------------
+        # 7. Validate AI response
+        # -----------------------------------------------------
+
+        if (
+            not completion
+            or not completion.choices
+        ):
+            raise RuntimeError(
+                "AI service returned an invalid response."
+            )
+
+        answer = (
+            completion
+            .choices[0]
+            .message
+            .content
         )
 
-        answer = completion.choices[0].message.content
-
-        if not answer:
-            return "No response was generated."
+        if not answer or not answer.strip():
+            raise RuntimeError(
+                "AI service returned an empty response."
+            )
 
         return answer.strip()

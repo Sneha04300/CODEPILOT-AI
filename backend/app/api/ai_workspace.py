@@ -60,14 +60,14 @@ def ask_repository_question(
             detail="Conversation not found",
         )
 
-    # Make sure conversation belongs to the repository
+    # Make sure conversation belongs to repository
     if conversation.repository_id != data.repository_id:
         raise HTTPException(
             status_code=400,
             detail="Conversation does not belong to this repository",
         )
 
-    # Find files relevant to the current question
+    # Find relevant repository files
     relevant_files = AIWorkspaceService.find_relevant_files(
         db=db,
         repository_id=data.repository_id,
@@ -85,12 +85,25 @@ def ask_repository_question(
         conversation_id=data.conversation_id,
     )
 
-    # Ask AI using repository context + previous conversation
-    ai_answer = AIService.ask_repository(
-        question=data.question,
-        context=context_result["context"],
-        history=history,
-    )
+    # Ask AI with error handling
+    try:
+        ai_answer = AIService.ask_repository(
+            question=data.question,
+            context=context_result["context"],
+            history=history,
+        )
+
+    except ValueError as error:
+        raise HTTPException(
+            status_code=400,
+            detail=str(error),
+        )
+
+    except RuntimeError as error:
+        raise HTTPException(
+            status_code=503,
+            detail=str(error),
+        )
 
     # Save current user message
     AIConversationService.add_message(
@@ -100,7 +113,7 @@ def ask_repository_question(
         content=data.question,
     )
 
-    # Save current AI response
+    # Save AI response
     AIConversationService.add_message(
         db=db,
         conversation_id=data.conversation_id,
@@ -170,7 +183,7 @@ def explain_code(
 
 
 # ---------------------------------------------------------
-# 3. EXPLAIN A FILE FROM AN INDEXED REPOSITORY
+# 3. EXPLAIN FILE FROM INDEXED REPOSITORY
 # ---------------------------------------------------------
 
 @router.post("/explain-file")
@@ -213,7 +226,7 @@ def explain_repository_file(
 
 
 # ---------------------------------------------------------
-# 4. CREATE A NEW AI CONVERSATION
+# 4. CREATE CONVERSATION
 # ---------------------------------------------------------
 
 @router.post("/conversations")
@@ -221,7 +234,6 @@ def create_conversation(
     data: CreateConversationRequest,
     db: Session = Depends(get_db),
 ):
-    # Check whether repository exists
     result = AIWorkspaceService.get_repository_context(
         db=db,
         repository_id=data.repository_id,
@@ -255,7 +267,7 @@ def create_conversation(
 
 
 # ---------------------------------------------------------
-# 5. GET ALL CONVERSATIONS FOR A REPOSITORY
+# 5. GET ALL CONVERSATIONS FOR REPOSITORY
 # ---------------------------------------------------------
 
 @router.get("/repositories/{repository_id}/conversations")
@@ -288,7 +300,7 @@ def get_repository_conversations(
 
 
 # ---------------------------------------------------------
-# 6. GET MESSAGES FROM A CONVERSATION
+# 6. GET MESSAGES FROM CONVERSATION
 # ---------------------------------------------------------
 
 @router.get("/conversations/{conversation_id}/messages")
@@ -296,7 +308,6 @@ def get_conversation_messages(
     conversation_id: uuid.UUID,
     db: Session = Depends(get_db),
 ):
-    # Check whether conversation exists
     conversation = AIConversationService.get_conversation(
         db=db,
         conversation_id=conversation_id,
@@ -337,8 +348,9 @@ def get_conversation_messages(
         ],
     }
 
+
 # ---------------------------------------------------------
-# 7. DELETE A CONVERSATION
+# 7. DELETE CONVERSATION
 # ---------------------------------------------------------
 
 @router.delete("/conversations/{conversation_id}")
@@ -361,6 +373,7 @@ def delete_conversation(
         "success": True,
         "message": "Conversation deleted successfully",
     }
+
 
 # ---------------------------------------------------------
 # 8. UPDATE CONVERSATION TITLE
@@ -399,4 +412,46 @@ def update_conversation_title(
             "created_at": conversation.created_at,
             "updated_at": conversation.updated_at,
         },
+    }
+
+
+# ---------------------------------------------------------
+# 9. GET SINGLE CONVERSATION
+# ---------------------------------------------------------
+
+@router.get("/conversations/{conversation_id}")
+def get_conversation(
+    conversation_id: uuid.UUID,
+    db: Session = Depends(get_db),
+):
+    conversation = AIConversationService.get_conversation(
+        db=db,
+        conversation_id=conversation_id,
+    )
+
+    if conversation is None:
+        raise HTTPException(
+            status_code=404,
+            detail="Conversation not found",
+        )
+
+    messages = AIConversationService.get_messages(
+        db=db,
+        conversation_id=conversation_id,
+    )
+
+    return {
+        "success": True,
+
+        "conversation": {
+            "id": str(conversation.id),
+            "repository_id": str(
+                conversation.repository_id
+            ),
+            "title": conversation.title,
+            "created_at": conversation.created_at,
+            "updated_at": conversation.updated_at,
+        },
+
+        "message_count": len(messages),
     }
